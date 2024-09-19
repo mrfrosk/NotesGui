@@ -10,13 +10,15 @@ interface ISource {
 
     suspend fun getNotes(userId: UUID): List<NoteDto>
 
-    suspend fun getUsers(): List<UserInfoDto>
+    suspend fun getUser(email: String): UserInfoDto
+
+    suspend fun getUsers(): List<String>
 
     suspend fun authUser(email: String, password: String): Boolean
 
     suspend fun createNote(userId: UUID, title: String, text: String)
 
-    suspend fun updateNote(oldTitle: String, newTitle: String, text: String)
+    suspend fun updateNote(title: String, text: String)
 
     suspend fun deleteNote(title: String)
 }

@@ -10,9 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import data.dto.NoteDto
-import data.dto.UserInfoDto
 import data.source.SpringDataSource
 import kotlinx.coroutines.launch
 import java.util.*
@@ -21,7 +19,8 @@ class NotePage {
     private val source = SpringDataSource()
 
     @Composable
-    fun draw(userInfoDto: UserInfoDto) {
+    fun draw(email: String) {
+        var id: UUID? = null
         val notes by remember {
             mutableStateOf(mutableSetOf<NoteDto>())
         }
@@ -31,7 +30,8 @@ class NotePage {
         val selectNote = remember { mutableStateOf<NoteDto?>(null) }
         val updateNote = suspend {
             notes.clear()
-            notes.addAll(source.getNotes(userInfoDto.id))
+            id = source.getUser(email).id
+            notes.addAll(source.getNotes(id!!))
             isLoad = true
         }
 
@@ -45,7 +45,7 @@ class NotePage {
             }
 
             when (currentPage.value) {
-                NotePages.Create -> newNote(userInfoDto.id, suspend { isLoad = false })
+                NotePages.Create -> newNote(email, suspend { isLoad = false })
                 NotePages.Info -> detailNoteInfo(selectNote, suspend {
                     isLoad = false
                 }) {
@@ -70,11 +70,16 @@ class NotePage {
             var text by remember { mutableStateOf(noteState.value!!.text) }
             Column(Modifier.fillMaxSize()) {
                 OutlinedTextField(title, onValueChange = { title = it }, label = { robotoText("Название") })
-                OutlinedTextField(text, onValueChange = { text = it }, label = { robotoText("Текст") })
+                OutlinedTextField(
+                    text,
+                    onValueChange = { text = it },
+                    label = { robotoText("Текст") },
+                    modifier = Modifier.fillMaxSize(0.7f)
+                )
                 Row {
                     Button({
                         scope.launch {
-                            source.updateNote(noteState.value!!.title, title, text)
+                            source.updateNote(title, text)
                             onUpdate()
                         }
                     }) {
@@ -97,16 +102,18 @@ class NotePage {
     }
 
     @Composable
-    private fun newNote(userId: UUID, onUpdate: suspend () -> Unit) {
+    private fun newNote(email: String, onUpdate: suspend () -> Unit) {
         var createNewNote by remember { mutableStateOf(false) }
         var noteName by remember { mutableStateOf("") }
         var noteText by remember { mutableStateOf("") }
         val scope = rememberCoroutineScope()
         val onClick = {
-            if (noteName.isNotEmpty() && noteText.isNotEmpty()) {
+            if (noteName.isNotEmpty()) {
                 scope.launch {
-                    source.createNote(userId, noteName, noteText)
+                    val id = source.getUser(email).id
+                    source.createNote(id, noteName, noteText)
                     onUpdate()
+
                 }
             }
 
@@ -117,15 +124,15 @@ class NotePage {
                 OutlinedTextField(
                     value = noteName,
                     onValueChange = { noteName = it },
-                    placeholder = { robotoText("Название") }
+                    label = { robotoText("Название") }
                 )
                 OutlinedTextField(
                     value = noteText,
                     onValueChange = { noteText = it },
-                    placeholder = { robotoText("Текст") }
+                    label = { robotoText("Название") },
+                    modifier = Modifier.fillMaxSize(0.7f)
                 )
             }
-
             Button(onClick) {
                 robotoText("Создать заметку", color = Color.White)
             }

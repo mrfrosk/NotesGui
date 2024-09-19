@@ -9,7 +9,7 @@ import data.dto.UserInfoDto
 
 class MainPage {
     private val currentPage = mutableStateOf(GlobalPages.Auth)
-    private val currentUser: MutableState<UserInfoDto?> = mutableStateOf(null)
+    private val currentUser: MutableState<String?> = mutableStateOf(null)
     private val selectPage = NotePage()
     private val profilePage = ProfilePage(currentPage, currentUser)
 
@@ -23,7 +23,9 @@ class MainPage {
                     clickableText("Тикеты", action = {currentPage = GlobalPages.Ticket})
                 }
             }
-            navigate(currentPage)
+            Box(Modifier.fillMaxWidth()) {
+                navigate(currentPage)
+            }
         }
 
     }

@@ -15,20 +15,20 @@ import data.source.ISource
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 
-class ProfilePage(private val navigateState: MutableState<GlobalPages>, val userState: MutableState<UserInfoDto?>) {
+class ProfilePage(private val navigateState: MutableState<GlobalPages>, val userState: MutableState<String?>) {
     private val source: ISource = SpringDataSource()
 
     @Composable
     fun draw() {
         val scope = rememberCoroutineScope()
         var expanded by remember { mutableStateOf(false) }
-        val users by mutableStateOf(mutableListOf<UserInfoDto>())
+        val users by mutableStateOf(mutableListOf<String>())
         val currentUser = remember { mutableStateOf<String>("") }
         val readyToLogin = remember { mutableStateOf(false) }
         scope.launch {
             users.addAll(async { source.getUsers() }.await())
             if (currentUser.value == ""){
-                currentUser.value = users[0].email
+                currentUser.value = users.first()
             }
         }
 
@@ -54,16 +54,16 @@ class ProfilePage(private val navigateState: MutableState<GlobalPages>, val user
         expanded: Boolean,
         onDismiss: () -> Unit,
         state: MutableState<String>,
-        userList: List<UserInfoDto>
+        userList: List<String>
     ) = DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
         for (user in userList) {
-            DropdownMenuItem(onClick = { state.value = user.email },
-                content = { Text(user.email) })
+            DropdownMenuItem(onClick = { state.value = user },
+                content = { Text(user) })
         }
     }
 
     @Composable
-    fun authForm(email: String, users: List<UserInfoDto>) {
+    fun authForm(email: String, users: List<String>) {
         var password by remember { mutableStateOf("") }
         val scope = rememberCoroutineScope()
         OutlinedTextField(
@@ -80,7 +80,7 @@ class ProfilePage(private val navigateState: MutableState<GlobalPages>, val user
                 println(password)
                 if(isAuth){
                     navigateState.value = GlobalPages.Note
-                    userState.value = users.first { it.email == email }
+                    userState.value = users.first { it == email }
                     println(userState.value.toString())
                 }
             }
