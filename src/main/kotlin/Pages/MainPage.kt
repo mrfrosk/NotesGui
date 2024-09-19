@@ -33,7 +33,7 @@ class MainPage {
     @Composable
     fun navigate(currentSection: GlobalPages) = when (currentSection) {
         GlobalPages.Auth -> profilePage.draw()
-        GlobalPages.Note -> selectPage.draw(currentUser.value!!)
+        GlobalPages.Note -> selectPage.draw()
         GlobalPages.Ticket -> null
     }
 }

@@ -1,6 +1,7 @@
 package data.dto
 
-object Jwt {
+object Session {
     var accessToken: String? = null
     var refreshToken: String? = null
+    var email: String? = null
 }

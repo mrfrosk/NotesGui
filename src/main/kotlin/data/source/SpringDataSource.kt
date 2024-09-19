@@ -1,6 +1,6 @@
 package data.source
 
-import data.dto.Jwt
+import data.dto.Session
 import data.dto.JwtDto
 import data.dto.NoteDto
 import data.dto.UserInfoDto
@@ -20,14 +20,14 @@ class SpringDataSource: ISource {
 
     override suspend fun getNote(title: String): NoteDto {
         val note = client.get("$serverAddress/notes/note/$title".encodeURLPath()){
-            headers.append("Authorization", "Bearer ${Jwt.accessToken}")
+            headers.append("Authorization", "Bearer ${Session.accessToken}")
         }
         return Json.decodeFromString<NoteDto>(note.bodyAsText())
     }
 
     override suspend fun getNotes(userId: UUID): List<NoteDto> {
         val notes = client.get("$serverAddress/notes/all/$userId".encodeURLPath()){
-            headers.append("Authorization", "Bearer ${Jwt.accessToken}")
+            headers.append("Authorization", "Bearer ${Session.accessToken}")
         }
         return Json.decodeFromString<List<NoteDto>>(notes.bodyAsText())
     }
@@ -48,8 +48,9 @@ class SpringDataSource: ISource {
             body = Json.encodeToString(mapOf("email" to email, "password" to password))
         }.bodyAsText()
         val tokens = Json.decodeFromString<JwtDto>(response)
-        Jwt.accessToken = tokens.accessToken
-        Jwt.refreshToken = tokens.refreshToken
+        Session.accessToken = tokens.accessToken
+        Session.refreshToken = tokens.refreshToken
+        Session.email = email
         return tokens.accessToken.isNotEmpty()
     }
 
@@ -58,7 +59,7 @@ class SpringDataSource: ISource {
         val reqeust = client.post("$serverAddress/notes/new".encodeURLPath()){
 //            body = Json.encodeToString(mapOf("title" to title, "text" to text, "userId" to userId.toString()))
             body = Json.encodeToString(NoteDto(title, text, userId))
-            headers.append("Authorization", "Bearer ${Jwt.accessToken}")
+            headers.append("Authorization", "Bearer ${Session.accessToken}")
         }
         println("status: ${reqeust.status}")
     }
@@ -67,7 +68,7 @@ class SpringDataSource: ISource {
     override suspend fun updateNote(title: String, text: String) {
         client.put("$serverAddress/notes/note/$title".encodeURLPath()){
             body = text
-            headers.append("Authorization", "Bearer ${Jwt.accessToken}")
+            headers.append("Authorization", "Bearer ${Session.accessToken}")
         }
     }
 

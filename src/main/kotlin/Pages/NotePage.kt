@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import data.dto.NoteDto
+import data.dto.Session
 import data.source.SpringDataSource
 import kotlinx.coroutines.launch
 import java.util.*
@@ -19,8 +20,7 @@ class NotePage {
     private val source = SpringDataSource()
 
     @Composable
-    fun draw(email: String) {
-        var id: UUID? = null
+    fun draw() {
         val notes by remember {
             mutableStateOf(mutableSetOf<NoteDto>())
         }
@@ -29,10 +29,12 @@ class NotePage {
         val currentPage = remember { mutableStateOf(NotePages.Create) }
         val selectNote = remember { mutableStateOf<NoteDto?>(null) }
         val updateNote = suspend {
+            val email = Session.email
+            val id = source.getUser(email!!).id
             notes.clear()
-            id = source.getUser(email).id
-            notes.addAll(source.getNotes(id!!))
+            notes.addAll(source.getNotes(id))
             isLoad = true
+
         }
 
         Column {
@@ -45,7 +47,7 @@ class NotePage {
             }
 
             when (currentPage.value) {
-                NotePages.Create -> newNote(email, suspend { isLoad = false })
+                NotePages.Create -> newNote(Session.email!!, suspend { isLoad = false })
                 NotePages.Info -> detailNoteInfo(selectNote, suspend {
                     isLoad = false
                 }) {

@@ -75,9 +75,6 @@ class ProfilePage(private val navigateState: MutableState<GlobalPages>, val user
         Button({
             scope.launch {
                 val isAuth = source.authUser(email, password)
-                println(isAuth)
-                println(email)
-                println(password)
                 if(isAuth){
                     navigateState.value = GlobalPages.Note
                     userState.value = users.first { it == email }
