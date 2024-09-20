@@ -40,7 +40,6 @@ class SpringDataSource: ISource {
 
     override suspend fun getUsers(): List<String> {
         val users = client.get("http://localhost:8080/api/users/all".encodeURLPath())
-        println(users.status)
         return Json.decodeFromString<List<UserInfoDto>>(users.bodyAsText()).map { it.email }
     }
 
