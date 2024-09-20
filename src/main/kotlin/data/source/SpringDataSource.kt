@@ -26,7 +26,7 @@ class SpringDataSource: ISource {
     }
 
     override suspend fun getNotes(userId: UUID): List<NoteDto> {
-        val notes = client.get("$serverAddress/notes/all/$userId".encodeURLPath()){
+        val notes = client.get("$serverAddress/notes/$userId".encodeURLPath()){
             headers.append("Authorization", "Bearer ${Session.accessToken}")
         }
         return Json.decodeFromString<List<NoteDto>>(notes.bodyAsText())
@@ -34,12 +34,14 @@ class SpringDataSource: ISource {
 
     override suspend fun getUser(email: String): UserInfoDto {
         val user = client.get("$serverAddress/users/user/$email".encodeURLPath())
+        println("status: ${user.status}")
         return Json.decodeFromString<UserInfoDto>(user.bodyAsText())
     }
 
     override suspend fun getUsers(): List<String> {
         val users = client.get("http://localhost:8080/api/users/all".encodeURLPath())
-        return Json.decodeFromString<List<String>>(users.bodyAsText())
+        println(users.status)
+        return Json.decodeFromString<List<UserInfoDto>>(users.bodyAsText()).map { it.email }
     }
 
     @OptIn(InternalAPI::class)
@@ -57,7 +59,6 @@ class SpringDataSource: ISource {
     @OptIn(InternalAPI::class)
     override suspend fun createNote(userId: UUID, title: String, text: String) {
         val reqeust = client.post("$serverAddress/notes/new".encodeURLPath()){
-//            body = Json.encodeToString(mapOf("title" to title, "text" to text, "userId" to userId.toString()))
             body = Json.encodeToString(NoteDto(title, text, userId))
             headers.append("Authorization", "Bearer ${Session.accessToken}")
         }
@@ -66,13 +67,15 @@ class SpringDataSource: ISource {
 
     @OptIn(InternalAPI::class)
     override suspend fun updateNote(title: String, text: String) {
-        client.put("$serverAddress/notes/note/$title".encodeURLPath()){
+        client.put("$serverAddress/notes/$title".encodeURLPath()){
             body = text
             headers.append("Authorization", "Bearer ${Session.accessToken}")
         }
     }
 
     override suspend fun deleteNote(title: String) {
-        client.delete("$serverAddress/notes/$title".encodeURLPath())
+        client.delete("$serverAddress/notes/$title".encodeURLPath()){
+            headers.append("Authorization", "Bearer ${Session.accessToken}")
+        }
     }
 }
