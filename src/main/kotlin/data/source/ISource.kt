@@ -8,7 +8,7 @@ interface ISource {
 
     suspend fun getNote(title: String): NoteDto
 
-    suspend fun getNotes(userId: UUID): List<NoteDto>
+    suspend fun getNotes(userId: UUID): Set<NoteDto>
 
     suspend fun getUser(email: String): UserInfoDto
 

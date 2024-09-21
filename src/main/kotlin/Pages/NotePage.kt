@@ -3,6 +3,9 @@ package Pages
 import Pages.enums.NotePages
 import UiComponents.clickableText
 import UiComponents.robotoText
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.rememberScrollableState
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
 import androidx.compose.material.OutlinedTextField
@@ -14,7 +17,6 @@ import data.dto.NoteDto
 import data.dto.Session
 import data.source.SpringDataSource
 import kotlinx.coroutines.launch
-import java.util.*
 
 class NotePage {
     private val source = SpringDataSource()
@@ -29,9 +31,9 @@ class NotePage {
         val currentPage = remember { mutableStateOf(NotePages.Create) }
         val selectNote = remember { mutableStateOf<NoteDto?>(null) }
         val updateNote = suspend {
+            notes.clear()
             val email = Session.email
             val id = source.getUser(email!!).id
-            notes.clear()
             notes.addAll(source.getNotes(id))
             isLoad = true
 
@@ -115,7 +117,8 @@ class NotePage {
                     val id = source.getUser(email).id
                     source.createNote(id, noteName, noteText)
                     onUpdate()
-
+                    noteName = ""
+                    noteText = ""
                 }
             }
 
@@ -143,13 +146,16 @@ class NotePage {
     }
 
     @Composable
-    private fun listOfNote(list: Set<NoteDto>, noteState: MutableState<NoteDto?>, pageState: MutableState<NotePages>) {
-        val scope = rememberCoroutineScope()
-        Column {
-            for (note in list) {
+    private fun listOfNote(
+        noteSet: Set<NoteDto>,
+        noteState: MutableState<NoteDto?>,
+        pageState: MutableState<NotePages>
+    ) {
+        Column{
+            for (note in noteSet) {
                 Row {
                     clickableText("Название: ${note.title}", action = {
-                        scope.launch { noteState.value = source.getNote(note.title) }
+                        noteState.value = noteSet.find { it.title == note.title }!!
                         if (pageState.value == NotePages.Create) {
                             pageState.value = NotePages.Info
                         } else {

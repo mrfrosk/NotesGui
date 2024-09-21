@@ -25,16 +25,15 @@ class SpringDataSource: ISource {
         return Json.decodeFromString<NoteDto>(note.bodyAsText())
     }
 
-    override suspend fun getNotes(userId: UUID): List<NoteDto> {
+    override suspend fun getNotes(userId: UUID): Set<NoteDto> {
         val notes = client.get("$serverAddress/notes/$userId".encodeURLPath()){
             headers.append("Authorization", "Bearer ${Session.accessToken}")
         }
-        return Json.decodeFromString<List<NoteDto>>(notes.bodyAsText())
+        return Json.decodeFromString<Set<NoteDto>>(notes.bodyAsText())
     }
 
     override suspend fun getUser(email: String): UserInfoDto {
         val user = client.get("$serverAddress/users/user/$email".encodeURLPath())
-        println("status: ${user.status}")
         return Json.decodeFromString<UserInfoDto>(user.bodyAsText())
     }
 
@@ -61,7 +60,6 @@ class SpringDataSource: ISource {
             body = Json.encodeToString(NoteDto(title, text, userId))
             headers.append("Authorization", "Bearer ${Session.accessToken}")
         }
-        println("status: ${reqeust.status}")
     }
 
     @OptIn(InternalAPI::class)

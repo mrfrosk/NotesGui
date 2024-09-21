@@ -59,15 +59,16 @@ fun main() = application {
 }
 
 @OptIn(InternalAPI::class)
-fun main1(){
+fun main2() {
     runBlocking {
         val client = HttpClient(CIO)
         val serverAddress = "http://localhost:8080"
-        val token = "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJteU1haWwxMiIsImlhdCI6MTcyNjY1NTc3MSwiZXhwIjoxODEzMDU1NzcxfQ.kJrVu3UlYVF7OPA9rCGb5ksbCeS3VK0_qud7pprHA_lQfRkhV845hDeku1jFZDgw4eE5MJL8Ne8GE7sdnBw8Mg"
-        val note = client.post("http://localhost:8080/api/notes/new".encodeURLPath()){
+        val token =
+            "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJteU1haWwxMiIsImlhdCI6MTcyNjY1NTc3MSwiZXhwIjoxODEzMDU1NzcxfQ.kJrVu3UlYVF7OPA9rCGb5ksbCeS3VK0_qud7pprHA_lQfRkhV845hDeku1jFZDgw4eE5MJL8Ne8GE7sdnBw8Mg"
+        val note = client.post("http://localhost:8080/api/notes/new".encodeURLPath()) {
             headers.append("Authorization", token)
             body = Json.encodeToString(NoteDto("as", "as1as", UUID.fromString("6821b6ae-0408-4008-afd6-725b17ff4f39")))
         }
-        println(note.status)
     }
 }
+

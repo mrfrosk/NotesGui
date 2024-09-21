@@ -23,7 +23,7 @@ class MainPage {
                     clickableText("Тикеты", action = {currentPage = GlobalPages.Ticket})
                 }
             }
-            Box(Modifier.fillMaxWidth()) {
+            Box(Modifier.fillMaxSize()) {
                 navigate(currentPage)
             }
         }
