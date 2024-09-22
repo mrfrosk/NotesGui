@@ -58,17 +58,8 @@ fun ticketPage() {
 
 fun main() = application {
     Window(onCloseRequest = ::exitApplication) {
-        val date = remember { mutableStateOf(LocalDate.now()) }
-        Column {
-            datePicker(date)
-            Button({
-                println(date)
-            }){
-                Text("отобразить дату")
-            }
-        }
-
-
+        val mainPage = MainPage()
+        mainPage.draw()
     }
 }
 

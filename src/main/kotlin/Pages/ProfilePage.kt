@@ -11,13 +11,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import data.dto.Session
 import data.dto.UserFullDto
 import data.source.SpringDataSource
 import data.source.ISource
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 
-class ProfilePage(private val navigateState: MutableState<GlobalPages>, val userState: MutableState<String?>) {
+class ProfilePage(private val navigateState: MutableState<GlobalPages>) {
     private val padding = 5.dp
     private val user = UserFullDto()
 
@@ -61,7 +62,7 @@ class ProfilePage(private val navigateState: MutableState<GlobalPages>, val user
                         scope.launch {
                             val authStatus = source.authUser(email, password)
                             if (authStatus) {
-                                userState.value = email
+                                Session.email = email
                                 navigateState.value = GlobalPages.Note
                             }
                         }
@@ -74,7 +75,7 @@ class ProfilePage(private val navigateState: MutableState<GlobalPages>, val user
                         if (createUser) {
                             scope.launch {
                                 source.createUser(user)
-                                userState.value = email
+                                Session.email = email
                                 navigateState.value = GlobalPages.Note
                             }
                         }
