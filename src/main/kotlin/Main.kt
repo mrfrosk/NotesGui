@@ -1,9 +1,13 @@
 import Pages.MainPage
 import Pages.enums.GlobalPages
+import UiComponents.Month
 import UiComponents.clickableText
+import UiComponents.datePicker
 import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.window.Window
@@ -17,6 +21,7 @@ import io.ktor.util.*
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import java.time.LocalDate
 import java.util.*
 
 
@@ -53,8 +58,17 @@ fun ticketPage() {
 
 fun main() = application {
     Window(onCloseRequest = ::exitApplication) {
-        val mainPage = MainPage()
-        mainPage.draw()
+        val date = remember { mutableStateOf(LocalDate.now()) }
+        Column {
+            datePicker(date)
+            Button({
+                println(date)
+            }){
+                Text("отобразить дату")
+            }
+        }
+
+
     }
 }
 

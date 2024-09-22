@@ -8,10 +8,10 @@ import androidx.compose.ui.Modifier
 import data.dto.UserInfoDto
 
 class MainPage {
-    private val currentPage = mutableStateOf(GlobalPages.Auth)
     private val currentUser: MutableState<String?> = mutableStateOf(null)
-    private val selectPage = NotePage()
+    private val currentPage = mutableStateOf(GlobalPages.Auth)
     private val profilePage = ProfilePage(currentPage, currentUser)
+    private val selectPage = NotePage()
 
     @Composable
     fun draw() {

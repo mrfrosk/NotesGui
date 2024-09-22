@@ -3,12 +3,13 @@ package Pages
 import Pages.enums.NotePages
 import UiComponents.clickableText
 import UiComponents.robotoText
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.rememberScrollableState
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.OutlinedTextField
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.sharp.Notifications
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -17,6 +18,8 @@ import data.dto.NoteDto
 import data.dto.Session
 import data.source.SpringDataSource
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.util.Calendar
 
 class NotePage {
     private val source = SpringDataSource()
@@ -68,7 +71,7 @@ class NotePage {
         onDelete: suspend () -> Unit
     ) {
         val scope = rememberCoroutineScope()
-
+        var callDialog by remember { mutableStateOf(false) }
         if (noteState.value != null) {
             var title by remember { mutableStateOf(noteState.value!!.title) }
             var text by remember { mutableStateOf(noteState.value!!.text) }
@@ -99,6 +102,13 @@ class NotePage {
                         }
                     }) {
                         robotoText("Удалить", color = Color.White)
+                    }
+
+                    IconButton(onClick = { callDialog = true }) {
+                        Icon(Icons.Sharp.Notifications, contentDescription = null, tint = Color.Black)
+                    }
+                    if (callDialog) {
+                        addNotification()
                     }
                 }
             }
@@ -145,13 +155,28 @@ class NotePage {
         }
     }
 
+
+    @Composable
+    fun addNotification() {
+        val year = LocalDate.now().year
+        var date by remember { mutableStateOf("") }
+        OutlinedTextField(date, onValueChange = {date = it})
+        Button({
+            val isMatch = date.matches("$year-\\d{2}-\\d{2}".toRegex())
+        }){
+            robotoText("сохранить")
+            println()
+
+        }
+    }
+
     @Composable
     private fun listOfNote(
         noteSet: Set<NoteDto>,
         noteState: MutableState<NoteDto?>,
         pageState: MutableState<NotePages>
     ) {
-        Column{
+        Column {
             for (note in noteSet) {
                 Row {
                     clickableText("Название: ${note.title}", action = {
