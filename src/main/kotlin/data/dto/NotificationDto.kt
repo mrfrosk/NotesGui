@@ -1,15 +1,16 @@
 package data.dto
 
 import data.utils.UUIDSerializer
+
 import kotlinx.serialization.Serializable
+import kotlinx.datetime.LocalDateTime
 import java.util.UUID
 
 @Serializable
-data class NoteDto(
-    val title: String,
+data class NotificationDto(
     val text: String,
+    val date: LocalDateTime,
+    val repeat: Boolean,
     @Serializable(with = UUIDSerializer::class)
-    val userId: UUID,
-    @Serializable(with = UUIDSerializer::class)
-    val id: UUID? = null
+    val noteId: UUID
 )

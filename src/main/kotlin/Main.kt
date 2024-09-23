@@ -22,6 +22,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.*
 
 
@@ -60,6 +61,7 @@ fun main() = application {
     Window(onCloseRequest = ::exitApplication) {
         val mainPage = MainPage()
         mainPage.draw()
+        println(LocalDateTime.now())
     }
 }
 

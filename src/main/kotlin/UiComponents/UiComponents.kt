@@ -7,7 +7,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
-import java.time.LocalDate
+import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 @Composable
 fun clickableText(text: String, size: TextUnit = 20.sp, action: () -> Unit) = TextButton(
@@ -25,8 +28,8 @@ fun robotoText(text: String, size: TextUnit = 20.sp, color: Color = Color.Black)
 )
 
 @Composable
-fun datePicker(dateState: MutableState<LocalDate>) {
-    val currentYear = LocalDate.now().year
+fun datePicker(dateState: MutableState<kotlinx.datetime.LocalDate>) {
+    val currentYear = Clock.System.now().toLocalDateTime(TimeZone.UTC).year
     var dayExpanded by remember { mutableStateOf(false) }
     var monthExpanded by remember { mutableStateOf(false) }
     var yearExpanded by remember { mutableStateOf(false) }
@@ -36,6 +39,7 @@ fun datePicker(dateState: MutableState<LocalDate>) {
     val dayToDate = if (day.toInt() < 10) "0$day" else day
     val monthDays = Month.entries.find { it.monthName == month }!!.days
     dateState.value = LocalDate.parse("$year-${Month.getByName(month)?.stringNumber}-$dayToDate")
+
     Column {
         Row {
             Column {
@@ -59,7 +63,9 @@ fun datePicker(dateState: MutableState<LocalDate>) {
         }
 
         Row {
-            DropdownMenu(dayExpanded, onDismissRequest = {}) {
+            DropdownMenu(dayExpanded, onDismissRequest = {
+                dayExpanded = false
+            }) {
                 for (dayItem in 1..monthDays) {
                     DropdownMenuItem(onClick = {
                         day = "$dayItem"
@@ -68,7 +74,9 @@ fun datePicker(dateState: MutableState<LocalDate>) {
                 }
             }
 
-            DropdownMenu(monthExpanded, onDismissRequest = {}) {
+            DropdownMenu(monthExpanded, onDismissRequest = {
+                monthExpanded = false
+            }) {
                 for (monthItem in Month.entries.map { it.monthName }) {
                     DropdownMenuItem(onClick = {
                         month = monthItem
@@ -77,7 +85,6 @@ fun datePicker(dateState: MutableState<LocalDate>) {
                 }
             }
             DropdownMenu(yearExpanded, onDismissRequest = {
-                yearExpanded = false
                 yearExpanded = false
             }) {
                 for (yearItem in currentYear..2100) {

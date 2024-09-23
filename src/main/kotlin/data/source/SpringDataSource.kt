@@ -87,4 +87,12 @@ class SpringDataSource : ISource {
             headers.append("Authorization", "Bearer ${Session.accessToken}")
         }
     }
+
+    @OptIn(InternalAPI::class)
+    override suspend fun createNotification(notificationDto: NotificationDto) {
+        client.post("$serverAddress/notifications/new".encodeURLPath()) {
+            headers.append("Authorization", "Bearer ${Session.accessToken}")
+            body = Json.encodeToString(notificationDto)
+        }
+    }
 }

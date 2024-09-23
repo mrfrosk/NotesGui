@@ -1,6 +1,7 @@
 package data.source
 
 import data.dto.NoteDto
+import data.dto.NotificationDto
 import data.dto.UserFullDto
 import data.dto.UserInfoDto
 import java.util.*
@@ -24,4 +25,6 @@ interface ISource {
     suspend fun updateNote(title: String, text: String)
 
     suspend fun deleteNote(title: String)
+
+    suspend fun createNotification(notificationDto: NotificationDto)
 }

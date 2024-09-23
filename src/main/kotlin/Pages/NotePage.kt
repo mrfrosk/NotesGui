@@ -2,24 +2,25 @@ package Pages
 
 import Pages.enums.NotePages
 import UiComponents.clickableText
+import UiComponents.datePicker
 import UiComponents.robotoText
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.Button
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.OutlinedTextField
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.sharp.Notifications
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import data.dto.NoteDto
+import data.dto.NotificationDto
 import data.dto.Session
 import data.source.SpringDataSource
 import kotlinx.coroutines.launch
-import java.time.LocalDate
-import java.util.Calendar
+import kotlinx.datetime.*
 
 class NotePage {
     private val source = SpringDataSource()
@@ -32,7 +33,7 @@ class NotePage {
         val scope = rememberCoroutineScope()
         var isLoad by remember { mutableStateOf(false) }
         val currentPage = remember { mutableStateOf(NotePages.Create) }
-        val selectNote = remember { mutableStateOf<NoteDto?>(null) }
+        val selectedNote = remember { mutableStateOf<NoteDto?>(null) }
         val updateNote = suspend {
             notes.clear()
             val email = Session.email
@@ -48,12 +49,12 @@ class NotePage {
             }
             robotoText("Заметки")
             if (isLoad) {
-                listOfNote(notes, selectNote, currentPage)
+                listOfNote(notes, selectedNote, currentPage)
             }
 
             when (currentPage.value) {
                 NotePages.Create -> newNote(Session.email!!, suspend { isLoad = false })
-                NotePages.Info -> detailNoteInfo(selectNote, suspend {
+                NotePages.Info -> detailNoteInfo(selectedNote, suspend {
                     isLoad = false
                 }) {
                     isLoad = false
@@ -108,7 +109,8 @@ class NotePage {
                         Icon(Icons.Sharp.Notifications, contentDescription = null, tint = Color.Black)
                     }
                     if (callDialog) {
-                        addNotification()
+                        addNotification({ callDialog = false }, noteState.value!!)
+
                     }
                 }
             }
@@ -157,39 +159,74 @@ class NotePage {
 
 
     @Composable
-    fun addNotification() {
-        val year = LocalDate.now().year
-        var date by remember { mutableStateOf("") }
-        OutlinedTextField(date, onValueChange = {date = it})
-        Button({
-            val isMatch = date.matches("$year-\\d{2}-\\d{2}".toRegex())
-        }){
-            robotoText("сохранить")
-            println()
+    fun addNotification(onDismissRequest: () -> Unit, note: NoteDto) {
+        var notificationText by remember { mutableStateOf("") }
+        val notificationDate = remember {
+            mutableStateOf(Clock.System.now().toLocalDateTime(TimeZone.UTC).date)
+        }
+        var repeat by remember { mutableStateOf(false) }
+        val scope = rememberCoroutineScope()
+        Dialog(onDismissRequest = { onDismissRequest() }) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(400.dp)
+                    .padding(16.dp),
+                shape = RoundedCornerShape(16.dp),
+            ) {
+                Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                    OutlinedTextField(
+                        notificationText,
+                        { notificationText = it },
+                        placeholder = { robotoText("Текст") })
+
+                    datePicker(notificationDate)
+                    Row {
+                        robotoText("Повторять")
+                        Checkbox(repeat, onCheckedChange = { repeat = !repeat })
+                    }
+
+                    Button({
+                        onDismissRequest()
+                        scope.launch {
+                            source.createNotification(
+                                NotificationDto(
+                                    notificationText,
+                                    LocalDateTime(notificationDate.value, LocalTime(0, 0)),
+                                    repeat,
+                                    note.id!!
+                                )
+                            )
+                        }
+                    }) {
+                        robotoText("Создать", color = Color.White)
+                    }
+                }
+            }
 
         }
     }
+}
 
-    @Composable
-    private fun listOfNote(
-        noteSet: Set<NoteDto>,
-        noteState: MutableState<NoteDto?>,
-        pageState: MutableState<NotePages>
-    ) {
-        Column {
-            for (note in noteSet) {
-                Row {
-                    clickableText("Название: ${note.title}", action = {
-                        noteState.value = noteSet.find { it.title == note.title }!!
-                        if (pageState.value == NotePages.Create) {
-                            pageState.value = NotePages.Info
-                        } else {
-                            pageState.value = NotePages.Create
-                        }
-                    })
-                }
+@Composable
+private fun listOfNote(
+    noteSet: Set<NoteDto>,
+    noteState: MutableState<NoteDto?>,
+    pageState: MutableState<NotePages>
+) {
+    Column {
+        for (note in noteSet) {
+            Row {
+                clickableText("Название: ${note.title}", action = {
+                    noteState.value = noteSet.find { it.title == note.title }!!
+                    if (pageState.value == NotePages.Create) {
+                        pageState.value = NotePages.Info
+                    } else {
+                        pageState.value = NotePages.Create
+                    }
+                })
             }
         }
     }
-
 }
+
