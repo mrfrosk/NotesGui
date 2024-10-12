@@ -1,5 +1,6 @@
 package data.source
 
+import com.auth0.jwt.JWT
 import data.dto.*
 import io.ktor.client.*
 import io.ktor.client.request.*
@@ -7,7 +8,9 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.serialization.json.Json
 import io.ktor.client.engine.cio.*
+import io.ktor.server.util.*
 import io.ktor.util.*
+import kotlinx.datetime.*
 import kotlinx.serialization.encodeToString
 import java.util.UUID
 
@@ -16,6 +19,7 @@ class SpringDataSource : ISource {
     private val serverAddress = "http://localhost:8080/api"
 
     override suspend fun getNote(title: String): NoteDto {
+        checkAccessToken()
         val note = client.get("$serverAddress/notes/note/$title".encodeURLPath()) {
             headers.append("Authorization", "Bearer ${Session.accessToken}")
         }
@@ -30,7 +34,11 @@ class SpringDataSource : ISource {
     }
 
     override suspend fun getUser(email: String): UserInfoDto {
-        val user = client.get("$serverAddress/users/user/$email".encodeURLPath())
+        checkAccessToken()
+        val user = client.get("$serverAddress/users/user/$email".encodeURLPath()) {
+            headers.append("Authorization", "Bearer ${Session.accessToken}")
+        }
+
         return Json.decodeFromString<UserInfoDto>(user.bodyAsText())
     }
 
@@ -41,6 +49,7 @@ class SpringDataSource : ISource {
 
     @OptIn(InternalAPI::class)
     override suspend fun createUser(fullDto: UserFullDto) {
+        checkAccessToken()
         val user = UserFullDto(fullDto.email, fullDto.name, fullDto.surname, fullDto.patronymic, fullDto.password)
         val registration = client.post("$serverAddress/users/new".encodeURLPath()) {
             body = Json.encodeToString(user)
@@ -64,11 +73,13 @@ class SpringDataSource : ISource {
         Session.refreshToken = tokens.refreshToken
         Session.email = email
         return tokens.accessToken.isNotEmpty()
+
     }
 
     @OptIn(InternalAPI::class)
     override suspend fun createNote(userId: UUID, title: String, text: String) {
-        val reqeust = client.post("$serverAddress/notes/new".encodeURLPath()) {
+        checkAccessToken()
+        client.post("$serverAddress/notes/note/new".encodeURLPath()) {
             body = Json.encodeToString(NoteDto(title, text, userId))
             headers.append("Authorization", "Bearer ${Session.accessToken}")
         }
@@ -76,23 +87,56 @@ class SpringDataSource : ISource {
 
     @OptIn(InternalAPI::class)
     override suspend fun updateNote(title: String, text: String) {
-        client.put("$serverAddress/notes/$title".encodeURLPath()) {
+        checkAccessToken()
+        val response = client.put("$serverAddress/notes/note/$title".encodeURLPath()) {
             body = text
             headers.append("Authorization", "Bearer ${Session.accessToken}")
         }
     }
 
     override suspend fun deleteNote(title: String) {
-        client.delete("$serverAddress/notes/$title".encodeURLPath()) {
+        checkAccessToken()
+        val response = client.delete("$serverAddress/notes/note/$title".encodeURLPath()) {
             headers.append("Authorization", "Bearer ${Session.accessToken}")
         }
+        println("status : ${response.status}")
     }
 
     @OptIn(InternalAPI::class)
     override suspend fun createNotification(notificationDto: NotificationDto) {
-        client.post("$serverAddress/notifications/new".encodeURLPath()) {
+        val request = client.post("$serverAddress/notifications/new") {
             headers.append("Authorization", "Bearer ${Session.accessToken}")
             body = Json.encodeToString(notificationDto)
+        }.status
+    }
+
+    @OptIn(InternalAPI::class)
+    override suspend fun checkAccessToken() {
+        val accessToken = client.post("$serverAddress/auth/request-access-token".encodeURLPath()) {
+            body = Json.encodeToString(mapOf("token" to Session.refreshToken, "email" to Session.email))
+        }
+        Session.accessToken = accessToken.bodyAsText()
+
+    }
+
+    override suspend fun getNotifications(noteId: UUID): Set<NotificationDto> {
+        val notifications = client.get("$serverAddress/notifications/$noteId".encodeURLPath()) {
+            headers.append("Authorization", "Bearer ${Session.accessToken}")
+        }.bodyAsText()
+        println(notifications)
+
+        return Json.decodeFromString<Set<NotificationDto>>(notifications)
+    }
+
+    override suspend fun deleteNotification(notificationId: UUID) {
+        client.delete("$serverAddress/notifications/notification/$notificationId".encodeURLPath()) {
+            headers.append("Authorization", "Bearer ${Session.accessToken}")
+        }
+    }
+
+    override suspend fun deleteNotifications(noteId: UUID) {
+        client.delete("$serverAddress/notifications/$noteId".encodeURLPath()) {
+            headers.append("Authorization", "Bearer ${Session.accessToken}")
         }
     }
 }

@@ -29,6 +29,7 @@ dependencies {
     implementation("io.ktor:ktor-client-core:$ktor_version")
     implementation("io.ktor:ktor-client-cio:$ktor_version")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
+    implementation("com.auth0", "java-jwt", "4.2.1")
 }
 
 compose.desktop {

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.sharp.Delete
 import androidx.compose.material.icons.sharp.Notifications
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,6 +22,7 @@ import data.dto.Session
 import data.source.SpringDataSource
 import kotlinx.coroutines.launch
 import kotlinx.datetime.*
+import java.util.UUID
 
 class NotePage {
     private val source = SpringDataSource()
@@ -73,6 +75,7 @@ class NotePage {
     ) {
         val scope = rememberCoroutineScope()
         var callDialog by remember { mutableStateOf(false) }
+        val notifications by remember { mutableStateOf(mutableListOf<NotificationDto>()) }
         if (noteState.value != null) {
             var title by remember { mutableStateOf(noteState.value!!.title) }
             var text by remember { mutableStateOf(noteState.value!!.text) }
@@ -109,8 +112,8 @@ class NotePage {
                         Icon(Icons.Sharp.Notifications, contentDescription = null, tint = Color.Black)
                     }
                     if (callDialog) {
-                        addNotification({ callDialog = false }, noteState.value!!)
-
+//                        addNotification({ callDialog = false }, noteState.value!!)
+                        notificationsPage(noteState.value!!.id!!, noteState.value!!)
                     }
                 }
             }
@@ -189,11 +192,13 @@ class NotePage {
                     Button({
                         onDismissRequest()
                         scope.launch {
+                            println("создание уведомления")
                             source.createNotification(
                                 NotificationDto(
                                     notificationText,
                                     LocalDateTime(notificationDate.value, LocalTime(0, 0)),
                                     repeat,
+                                    note.userId,
                                     note.id!!
                                 )
                             )
@@ -203,10 +208,72 @@ class NotePage {
                     }
                 }
             }
+        }
+    }
 
+    @Composable
+    fun notificationsPage(noteId: UUID, note: NoteDto) {
+        val scope = rememberCoroutineScope()
+        val notifications by remember { mutableStateOf(mutableSetOf<NotificationDto>()) }
+        val isLoad = remember { mutableStateOf(false) }
+        val createNew = remember { mutableStateOf(false) }
+        if (!isLoad.value) {
+            scope.launch {
+                notifications.clear()
+                notifications.addAll(source.getNotifications(noteId))
+                println(source.getNotifications(noteId))
+                isLoad.value = true
+            }
+        }
+
+
+        Dialog(onDismissRequest = {}) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(400.dp)
+                    .padding(16.dp),
+                shape = RoundedCornerShape(16.dp),
+            ) {
+                if (isLoad.value) {
+                    Column(Modifier, verticalArrangement = Arrangement.Center) {
+                        if (notifications.isEmpty()) {
+                            Box(Modifier.align(Alignment.CenterHorizontally)) {
+                                robotoText("Для данной заметки нет уведомлений")
+                            }
+
+                        } else {
+                            notificationList(notifications, isLoad)
+                        }
+                        if (createNew.value) {
+                            addNotification({
+                                createNew.value = false
+                                isLoad.value = false
+                            }, note)
+                        }
+                        Row(Modifier.align(Alignment.CenterHorizontally)) {
+                            Button({
+                                createNew.value = true
+                            }) {
+                                robotoText("Создать", color = Color.White)
+                            }
+                            Spacer(Modifier.width(5.dp))
+                            Button({
+                                scope.launch {
+                                    source.deleteNotifications(noteId)
+                                    isLoad.value = false
+                                }
+                            }) {
+                                robotoText("Удалить все", color = Color.White)
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
+
 
 @Composable
 private fun listOfNote(
@@ -225,6 +292,29 @@ private fun listOfNote(
                         pageState.value = NotePages.Create
                     }
                 })
+            }
+        }
+    }
+}
+
+@Composable
+fun notificationList(notifications: Set<NotificationDto>, loadState: MutableState<Boolean>) = notifications.forEach {
+    val space = 5.dp
+    val scope = rememberCoroutineScope()
+    val source = SpringDataSource()
+    Column(Modifier.fillMaxWidth()) {
+        Row(Modifier.align(Alignment.CenterHorizontally)) {
+            robotoText(it.date.toString().replace("T", ":"))
+            Spacer(Modifier.width(space))
+            robotoText(it.text)
+            Spacer(Modifier.width(space))
+            IconButton({
+                scope.launch {
+                    source.deleteNotification(it.id!!)
+                    loadState.value = false
+                }
+            }) {
+                Icon(Icons.Sharp.Delete, contentDescription = "")
             }
         }
     }

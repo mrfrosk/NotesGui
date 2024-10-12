@@ -9,13 +9,13 @@ import data.dto.Session
 import data.dto.UserInfoDto
 
 class MainPage {
-    private val currentUser: MutableState<String?> = mutableStateOf(null)
     private val currentPage = mutableStateOf(GlobalPages.Auth)
     private val profilePage = ProfilePage(currentPage)
     private val selectPage = NotePage()
 
     @Composable
     fun draw() {
+
         var currentPage by remember { currentPage }
         Row(Modifier.fillMaxSize()) {
             if (Session.email != null) {

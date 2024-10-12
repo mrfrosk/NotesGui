@@ -29,10 +29,12 @@ class ProfilePage(private val navigateState: MutableState<GlobalPages>) {
         var createUser by remember { mutableStateOf(false) }
         val scope = rememberCoroutineScope()
         val source = SpringDataSource()
+        scope.launch {
+            source.authUser("test","123")
+            navigateState.value = GlobalPages.Note
+        }
 
         Column {
-
-
             OutlinedTextField(
                 email,
                 onValueChange = {

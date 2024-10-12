@@ -12,5 +12,7 @@ data class NotificationDto(
     val date: LocalDateTime,
     val repeat: Boolean,
     @Serializable(with = UUIDSerializer::class)
+    val id: UUID? = null,
+    @Serializable(with = UUIDSerializer::class)
     val noteId: UUID
 )

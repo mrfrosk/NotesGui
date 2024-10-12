@@ -27,4 +27,12 @@ interface ISource {
     suspend fun deleteNote(title: String)
 
     suspend fun createNotification(notificationDto: NotificationDto)
+
+    suspend fun checkAccessToken()
+
+    suspend fun getNotifications(noteId: UUID): Set<NotificationDto>
+
+    suspend fun deleteNotification(notificationId: UUID)
+
+    suspend fun deleteNotifications(noteId: UUID)
 }
