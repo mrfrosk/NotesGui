@@ -19,14 +19,15 @@ import androidx.compose.ui.window.Dialog
 import data.dto.NoteDto
 import data.dto.NotificationDto
 import data.dto.Session
-import data.source.SpringDataSource
+import data.source.SpringDataUserSource
+import data.source.SpringNoteSource
 import kotlinx.coroutines.launch
 import kotlinx.datetime.*
 import java.util.UUID
 
 class NotePage {
-    private val source = SpringDataSource()
-
+    private val source = SpringDataUserSource()
+    private val noteSource = SpringNoteSource()
     @Composable
     fun draw() {
         val notes by remember {
@@ -40,7 +41,7 @@ class NotePage {
             notes.clear()
             val email = Session.email
             val id = source.getUser(email!!).id
-            notes.addAll(source.getNotes(id))
+            notes.addAll(noteSource.getNotes(id))
             isLoad = true
 
         }
@@ -90,7 +91,7 @@ class NotePage {
                 Row {
                     Button({
                         scope.launch {
-                            source.updateNote(title, text)
+                            noteSource.updateNote(title, text)
                             onUpdate()
                         }
                     }) {
@@ -101,7 +102,7 @@ class NotePage {
 
                     Button({
                         scope.launch {
-                            source.deleteNote(noteState.value!!.title)
+                            noteSource.deleteNote(noteState.value!!.title)
                             onDelete()
                         }
                     }) {
@@ -129,7 +130,7 @@ class NotePage {
             if (noteName.isNotEmpty()) {
                 scope.launch {
                     val id = source.getUser(email).id
-                    source.createNote(id, noteName, noteText)
+                    noteSource.createNote(id, noteName, noteText)
                     onUpdate()
                     noteName = ""
                     noteText = ""
@@ -192,7 +193,7 @@ class NotePage {
                         onDismissRequest()
                         scope.launch {
                             println("создание уведомления")
-                            source.createNotification(
+                            noteSource.createNotification(
                                 NotificationDto(
                                     notificationText,
                                     LocalDateTime(notificationDate.value, LocalTime(0, 0)),
@@ -219,8 +220,8 @@ class NotePage {
         if (!isLoad.value) {
             scope.launch {
                 notifications.clear()
-                notifications.addAll(source.getNotifications(noteId))
-                println(source.getNotifications(noteId))
+                notifications.addAll(noteSource.getNotifications(noteId))
+                println(noteSource.getNotifications(noteId))
                 isLoad.value = true
             }
         }
@@ -259,7 +260,7 @@ class NotePage {
                             Spacer(Modifier.width(5.dp))
                             Button({
                                 scope.launch {
-                                    source.deleteNotifications(noteId)
+                                    noteSource.deleteNotifications(noteId)
                                     isLoad.value = false
                                 }
                             }) {
@@ -300,7 +301,7 @@ private fun listOfNote(
 fun notificationList(notifications: Set<NotificationDto>, loadState: MutableState<Boolean>) = notifications.forEach {
     val space = 5.dp
     val scope = rememberCoroutineScope()
-    val source = SpringDataSource()
+    val noteSource = SpringNoteSource()
     Column(Modifier.fillMaxWidth()) {
         Row(Modifier.align(Alignment.CenterHorizontally)) {
             robotoText(it.date.toString().replace("T", ":"))
@@ -309,7 +310,7 @@ fun notificationList(notifications: Set<NotificationDto>, loadState: MutableStat
             Spacer(Modifier.width(space))
             IconButton({
                 scope.launch {
-                    source.deleteNotification(it.id!!)
+                    noteSource.deleteNotification(it.id!!)
                     loadState.value = false
                 }
             }) {

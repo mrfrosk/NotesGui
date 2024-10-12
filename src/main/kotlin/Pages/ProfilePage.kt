@@ -13,9 +13,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import data.dto.Session
 import data.dto.UserFullDto
-import data.source.SpringDataSource
-import data.source.ISource
-import kotlinx.coroutines.async
+import data.source.SpringDataUserSource
 import kotlinx.coroutines.launch
 
 class ProfilePage(private val navigateState: MutableState<GlobalPages>) {
@@ -28,7 +26,7 @@ class ProfilePage(private val navigateState: MutableState<GlobalPages>) {
         var password by remember { mutableStateOf("") }
         var createUser by remember { mutableStateOf(false) }
         val scope = rememberCoroutineScope()
-        val source = SpringDataSource()
+        val source = SpringDataUserSource()
 
         Column {
             OutlinedTextField(
