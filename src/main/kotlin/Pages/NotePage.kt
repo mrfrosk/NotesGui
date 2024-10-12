@@ -112,8 +112,7 @@ class NotePage {
                         Icon(Icons.Sharp.Notifications, contentDescription = null, tint = Color.Black)
                     }
                     if (callDialog) {
-//                        addNotification({ callDialog = false }, noteState.value!!)
-                        notificationsPage(noteState.value!!.id!!, noteState.value!!)
+                        notificationsPage(noteState.value!!.id!!, noteState.value!!) { callDialog = false }
                     }
                 }
             }
@@ -212,7 +211,7 @@ class NotePage {
     }
 
     @Composable
-    fun notificationsPage(noteId: UUID, note: NoteDto) {
+    fun notificationsPage(noteId: UUID, note: NoteDto, onDismissRequest: () -> Unit) {
         val scope = rememberCoroutineScope()
         val notifications by remember { mutableStateOf(mutableSetOf<NotificationDto>()) }
         val isLoad = remember { mutableStateOf(false) }
@@ -227,7 +226,7 @@ class NotePage {
         }
 
 
-        Dialog(onDismissRequest = {}) {
+        Dialog(onDismissRequest = {onDismissRequest()}) {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
