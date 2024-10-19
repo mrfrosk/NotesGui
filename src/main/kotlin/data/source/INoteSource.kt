@@ -1,5 +1,6 @@
 package data.source
 
+import data.dto.NewNotificationDto
 import data.dto.NoteDto
 import data.dto.NotificationDto
 import java.util.*
@@ -14,9 +15,9 @@ interface INoteSource {
 
     suspend fun deleteNote(title: String)
 
-    suspend fun updateNote(title: String, text: String)
+    suspend fun updateNote(oldTitle: String, title: String, text: String)
 
-    suspend fun createNotification(notificationDto: NotificationDto)
+    suspend fun createNotification(notificationDto: NewNotificationDto)
 
     suspend fun getNotifications(noteId: UUID): Set<NotificationDto>
 

@@ -16,10 +16,13 @@ class SpringDataUserSource : IUserSource {
 
 
     override suspend fun getUser(email: String): UserInfoDto {
+//        разобраться почему checkAccessToken валит код
         Session.checkAccessToken()
-        val user = client.get("$serverAddress/users/user/$email".encodeURLPath()) {
+
+        val user = client.get("$serverAddress/users/user/$email") {
             headers.append("Authorization", "Bearer ${Session.accessToken}")
         }
+
 
         return Json.decodeFromString<UserInfoDto>(user.bodyAsText())
     }
@@ -31,16 +34,14 @@ class SpringDataUserSource : IUserSource {
 
     @OptIn(InternalAPI::class)
     override suspend fun createUser(fullDto: UserFullDto) {
-        Session.checkAccessToken()
         val user = UserFullDto(fullDto.email, fullDto.name, fullDto.surname, fullDto.patronymic, fullDto.password)
         val registration = client.post("$serverAddress/users/new".encodeURLPath()) {
             body = Json.encodeToString(user)
         }
 
-        println(registration.status)
-        if (Json.decodeFromString<Boolean>(registration.bodyAsText())) {
-            authUser(fullDto.email, fullDto.password)
-        }
+
+        authUser(fullDto.email, fullDto.password)
+
 
     }
 
@@ -50,10 +51,11 @@ class SpringDataUserSource : IUserSource {
         val response = client.post("$serverAddress/auth/login".encodeURLPath()) {
             body = Json.encodeToString(mapOf("email" to email, "password" to password))
         }.bodyAsText()
-        val tokens = Json.decodeFromString<JwtDto>(response)
+        val tokens = Json.decodeFromString<TokensDto>(response)
         Session.accessToken = tokens.accessToken
         Session.refreshToken = tokens.refreshToken
         Session.email = email
+        println(tokens.accessToken.isNotEmpty())
         return tokens.accessToken.isNotEmpty()
 
     }

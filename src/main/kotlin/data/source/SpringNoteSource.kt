@@ -1,8 +1,6 @@
 package data.source
 
-import data.dto.NoteDto
-import data.dto.NotificationDto
-import data.dto.Session
+import data.dto.*
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.request.*
@@ -13,7 +11,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.util.*
 
-class SpringNoteSource: INoteSource {
+class SpringNoteSource : INoteSource {
     private val client = HttpClient(CIO)
     private val serverAddress = "http://localhost:8080/api"
 
@@ -35,19 +33,28 @@ class SpringNoteSource: INoteSource {
     @OptIn(InternalAPI::class)
     override suspend fun createNote(userId: UUID, title: String, text: String) {
         Session.checkAccessToken()
-        client.post("$serverAddress/notes/note/new".encodeURLPath()) {
-            body = Json.encodeToString(NoteDto(title, text, userId))
+        val request = client.post("$serverAddress/notes/note/new".encodeURLPath()) {
+            body = Json.encodeToString(NewNoteDto(title, text, userId))
             headers.append("Authorization", "Bearer ${Session.accessToken}")
         }
+        println(request.bodyAsText())
     }
 
     @OptIn(InternalAPI::class)
-    override suspend fun updateNote(title: String, text: String) {
-        Session.checkAccessToken()
-        val response = client.put("$serverAddress/notes/note/$title".encodeURLPath()) {
-            body = text
+    override suspend fun updateNote(oldTitle: String, title: String, text: String) {
+//        Session.checkAccessToken()
+        println("oldTitle: $oldTitle")
+        println("title: $title")
+        println("text: $text")
+        println("AccessToken из session: ${Session.accessToken}")
+        println(oldTitle)
+        val response = client.put("$serverAddress/notes/note/$oldTitle".encodeURLPath()) {
+            println("updateDto: ${UpdateNoteDto(title, text)}")
+            println(Json.encodeToString(UpdateNoteDto(title, text)))
+            body = Json.encodeToString(UpdateNoteDto(title, text))
             headers.append("Authorization", "Bearer ${Session.accessToken}")
         }
+        println("updateStatus: ${response.status}")
     }
 
     override suspend fun deleteNote(title: String) {
@@ -59,16 +66,18 @@ class SpringNoteSource: INoteSource {
     }
 
     @OptIn(InternalAPI::class)
-    override suspend fun createNotification(notificationDto: NotificationDto) {
+    override suspend fun createNotification(notificationDto: NewNotificationDto) {
         val request = client.post("$serverAddress/notifications/new") {
             headers.append("Authorization", "Bearer ${Session.accessToken}")
             body = Json.encodeToString(notificationDto)
         }.status
     }
+
     override suspend fun getNotifications(noteId: UUID): Set<NotificationDto> {
         val notifications = client.get("$serverAddress/notifications/$noteId".encodeURLPath()) {
             headers.append("Authorization", "Bearer ${Session.accessToken}")
         }.bodyAsText()
+
         println(notifications)
 
         return Json.decodeFromString<Set<NotificationDto>>(notifications)

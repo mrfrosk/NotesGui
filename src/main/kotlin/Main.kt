@@ -7,13 +7,12 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import data.dto.NoteDto
-import data.dto.NotificationDto
-import data.dto.Session
+import data.dto.*
 import data.source.SpringDataUserSource
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.util.*
 import kotlinx.coroutines.runBlocking
@@ -72,11 +71,14 @@ fun main2() {
         val client = HttpClient(CIO)
         val serverAddress = "http://localhost:8080"
         val token =
-            "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJteU1haWwxMiIsImlhdCI6MTcyNjY1NTc3MSwiZXhwIjoxODEzMDU1NzcxfQ.kJrVu3UlYVF7OPA9rCGb5ksbCeS3VK0_qud7pprHA_lQfRkhV845hDeku1jFZDgw4eE5MJL8Ne8GE7sdnBw8Mg"
-        val note = client.post("http://localhost:8080/api/notes/new".encodeURLPath()) {
-            headers.append("Authorization", token)
-            body = Json.encodeToString(NoteDto("as", "as1as", UUID.fromString("6821b6ae-0408-4008-afd6-725b17ff4f39")))
+            "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ0ZXN0IiwiaWF0IjoxNzI5MjYxNTYxLCJleHAiOjE3MjkzNDc5NjF9.lp8W3lvHv8IoEg3HjHSdgmw_plmn_huTXDGeCLqfaN80psOtN68RVvU_JeYtmXw3-_B668Vccg5iI1Sj6E-Cnw"
+        val source = SpringDataUserSource()
+        source.authUser("test", "123")
+        val note = client.get("http://localhost:8080/api/users/user/test".encodeURLPath()) {
+            headers.append("Authorization", "Bearer ${Session.accessToken}")
         }
+        println(note.status)
+        println(Json.decodeFromString<UserInfoDto>(note.bodyAsText()))
     }
 }
 

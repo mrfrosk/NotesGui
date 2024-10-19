@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import data.dto.NewNotificationDto
 import data.dto.NoteDto
 import data.dto.NotificationDto
 import data.dto.Session
@@ -28,6 +29,7 @@ import java.util.UUID
 class NotePage {
     private val source = SpringDataUserSource()
     private val noteSource = SpringNoteSource()
+
     @Composable
     fun draw() {
         val notes by remember {
@@ -80,6 +82,7 @@ class NotePage {
         if (noteState.value != null) {
             var title by remember { mutableStateOf(noteState.value!!.title) }
             var text by remember { mutableStateOf(noteState.value!!.text) }
+            val originTitle = noteState.value!!.title
             Column(Modifier.fillMaxSize()) {
                 OutlinedTextField(title, onValueChange = { title = it }, label = { robotoText("Название") })
                 OutlinedTextField(
@@ -91,7 +94,7 @@ class NotePage {
                 Row {
                     Button({
                         scope.launch {
-                            noteSource.updateNote(title, text)
+                            noteSource.updateNote(originTitle, title, text)
                             onUpdate()
                         }
                     }) {
@@ -194,12 +197,11 @@ class NotePage {
                         scope.launch {
                             println("создание уведомления")
                             noteSource.createNotification(
-                                NotificationDto(
+                                NewNotificationDto(
                                     notificationText,
                                     LocalDateTime(notificationDate.value, LocalTime(0, 0)),
                                     repeat,
-                                    note.userId,
-                                    note.id!!
+                                    note.id!!,
                                 )
                             )
                         }
@@ -227,7 +229,7 @@ class NotePage {
         }
 
 
-        Dialog(onDismissRequest = {onDismissRequest()}) {
+        Dialog(onDismissRequest = { onDismissRequest() }) {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -272,51 +274,54 @@ class NotePage {
             }
         }
     }
-}
 
-
-@Composable
-private fun listOfNote(
-    noteSet: Set<NoteDto>,
-    noteState: MutableState<NoteDto?>,
-    pageState: MutableState<NotePages>
-) {
-    Column {
-        for (note in noteSet) {
-            Row {
-                clickableText("Название: ${note.title}", action = {
-                    noteState.value = noteSet.find { it.title == note.title }!!
-                    if (pageState.value == NotePages.Create) {
-                        pageState.value = NotePages.Info
-                    } else {
-                        pageState.value = NotePages.Create
-                    }
-                })
-            }
-        }
-    }
-}
-
-@Composable
-fun notificationList(notifications: Set<NotificationDto>, loadState: MutableState<Boolean>) = notifications.forEach {
-    val space = 5.dp
-    val scope = rememberCoroutineScope()
-    val noteSource = SpringNoteSource()
-    Column(Modifier.fillMaxWidth()) {
-        Row(Modifier.align(Alignment.CenterHorizontally)) {
-            robotoText(it.date.toString().replace("T", ":"))
-            Spacer(Modifier.width(space))
-            robotoText(it.text)
-            Spacer(Modifier.width(space))
-            IconButton({
-                scope.launch {
-                    noteSource.deleteNotification(it.id!!)
-                    loadState.value = false
+    @Composable
+    private fun listOfNote(
+        noteSet: Set<NoteDto>,
+        noteState: MutableState<NoteDto?>,
+        pageState: MutableState<NotePages>
+    ) {
+        Column {
+            for (note in noteSet) {
+                Row {
+                    clickableText("Название: ${note.title}", action = {
+                        noteState.value = noteSet.find { it.title == note.title }!!
+                        if (pageState.value == NotePages.Create) {
+                            pageState.value = NotePages.Info
+                        } else {
+                            pageState.value = NotePages.Create
+                        }
+                    })
                 }
-            }) {
-                Icon(Icons.Sharp.Delete, contentDescription = "")
             }
         }
     }
+
+    @Composable
+    fun notificationList(notifications: Set<NotificationDto>, loadState: MutableState<Boolean>) =
+        notifications.forEach {
+            val space = 5.dp
+            val scope = rememberCoroutineScope()
+            val noteSource = SpringNoteSource()
+            Column(Modifier.fillMaxWidth()) {
+                Row(Modifier.align(Alignment.CenterHorizontally)) {
+                    robotoText(it.date.toString().replace("T", ":"))
+                    Spacer(Modifier.width(space))
+                    robotoText(it.text)
+                    Spacer(Modifier.width(space))
+                    IconButton({
+                        scope.launch {
+                            noteSource.deleteNotification(it.id!!)
+                            loadState.value = false
+                        }
+                    }) {
+                        Icon(Icons.Sharp.Delete, contentDescription = "")
+                    }
+                }
+            }
+        }
 }
+
+
+
 

@@ -21,7 +21,7 @@ object Session {
         val accessToken = client.post("$serverAddress/auth/request-access-token".encodeURLPath()) {
             body = Json.encodeToString(mapOf("token" to refreshToken, "email" to email))
         }
-        Session.accessToken = accessToken.bodyAsText()
+        Session.accessToken = Json.decodeFromString(accessToken.bodyAsText())
 
     }
 }

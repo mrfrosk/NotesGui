@@ -56,6 +56,8 @@ class ProfilePage(private val navigateState: MutableState<GlobalPages>) {
                 Button(
                     {
                         scope.launch {
+                            println("email: $email")
+                            println("password: $password")
                             val authStatus = source.authUser(email, password)
                             if (authStatus) {
                                 Session.email = email
